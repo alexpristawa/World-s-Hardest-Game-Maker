@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kalam&display=swap');  /*  font-family: 'Kalam', cursive;  */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Mono&display=swap'); /*  font-family: 'Noto Sans Mono', monospace; */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap'); /*  font-family: 'Noto Serif', serif;  */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito&display=swap'); /*  font-family: 'Nunito', sans-serif;  */
+        @import url('https://fonts.googleapis.com/css2?family=Parisienne&display=swap'); /*  font-family: 'Parisienne', cursive;  */
+    </style>
+    <title>World's Hardest Game Maker</title>
+</head>
+<body>
+    <div class = 'screen makerScreen'>
+        <div id = 'topHolder'>
+            <div id = 'editButton'>
+                Edit
+            </div>
+            <div class = 'goButton' onclick = 'running()'>Go!</div>
+            <div id = 'editGroupButton' onclick = 'editGroups()'>Edit Groups</div>
+        </div>
+
+        <div class = 'boardHolder'>
+            <div class = 'board'>
+                <div class = 'innerBoard'>
+                    <canvas id = 'gameCanvas' height = '200px' width = '400px'></canvas>
+                    <div class = 'boardBackground'></div>
+                    <div class = 'noOverflow' id = 'visionGridNoOverflow'>
+                        <div class = 'visionGridColumn grid'></div>
+                        <div class = 'visionGridRow grid'></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class = 'optionsHolder'>
+            <div id = 'optionsHolderSafeZone'>
+                <div onclick = 'setSpawnLocation()'>Set Spawn Location</div>
+                <div onclick = 'setCompletionLocation()'>Set Completion Location</div>
+                <div onclick = 'setCheckpointLocation()'>Set Checkpoint</div>
+            </div>
+            <div id = 'optionsHolderEnemy'>
+                <div onclick = 'setDirection()'>Set Direction</div>
+                <div onclick = 'setSpeed()'>Set Speed</div>
+                <div onclick = 'handleEnableCollisions()' id = 'handleEnableCollisions'>Disable Collisions</div>
+                <div onclick = 'enableCustomBoundaries()' id = 'enableCustomBoundaries'>Enable Custom Boundaries</div>
+                <div onclick = 'customMovement()'>Custom Movement</div>
+            </div>
+        </div>
+
+        <div id = 'editGroups' data-active = 'false'>
+            <div onclick = 'groupNameClickHandler(event)'>
+                
+            </div>
+            <div id = 'editGroupsInfo'>
+                <div id = 'editGroupsInfoSafeZone'>
+                    <button onclick = 'setSpawnLocation(true)'>Spawn Location</button>
+                    <button onclick = 'setCompletionLocation(true)'>Completion Location</button>
+                    <button onclick = 'setCheckpointLocation(true)'>Checkpoint</button>
+                </div>
+                <div id = 'editGroupsInfoEnemy'>
+                    <div>
+                        Movement:
+                        <button onclick = "storeGroupInformation('movement', 'Horizontal')">Horizontal</button>
+                        <button onclick = "storeGroupInformation('movement', 'Vertical')">Vertical</button>
+                        <button onclick = "storeGroupInformation('movement', 'None')">None</button>
+                    </div>
+                    <div>
+                        Starting Direction:
+                        <button onclick = "storeGroupInformation('direction', 'Positive')">Positive</button>
+                        <button onclick = "storeGroupInformation('direction', 'Negative')">Negative</button>
+                    </div>
+                    <div>
+                        Linear Speed:
+                        <input type="text" id = 'createGroupLinearSpeed'>
+                    </div>
+                    <div>
+                        Circular Motion:
+                        <input type="checkbox" id = 'createGroupCircularMotion'>
+                    </div>
+                    <div>
+                        Rotational Speed:
+                        <input type="text" id = 'createGroupRotationalSpeed' placeholder = 'Quarter rotations/sec'>
+                    </div>
+                    <div>
+                        Rotational Direction:
+                        <button onclick = "storeGroupInformation('rotationalDirection', 'Clockwise')">Clockwise</button>
+                        <button onclick = "storeGroupInformation('rotationalDirection', 'Counterclockwise')">Counterclockwise</button>
+                    </div>
+                    <div id = 'closeGroupHolder'>
+                        <button onclick = 'closeGroup()'>Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id = 'setSpeedDiv' class = 'enemyOptionsDiv'>
+            Set Speed
+            <input type="text" id = 'setSpeedTextbox' placeholder = 'Speed (Default 1)'>
+        </div>
+
+        <div id = 'setDirectionDiv' class = 'enemyOptionsDiv'>
+            <div style = 'height: 5%'></div>
+            Set Direction
+            <div>
+                <div>
+                    <div>Horizontal</div>
+                    <div>
+                        <button id = 'setDirectionHorizontalPositive'>+</button>
+                        <button id = 'setDirectionHorizontalNegative'>-</button>
+                    </div>
+                </div>
+                <div>
+                    <div>Vertical</div>
+                    <div>
+                        <button id = 'setDirectionVerticalPositive'>+</button>
+                        <button id = 'setDirectionVerticalNegative'>-</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id = 'typeOfGroup'>
+            <div>
+                Create Group
+                &nbsp &nbsp &nbsp &nbsp &nbsp
+                Name:
+                <input type="text" id = 'groupNumberInput'>
+            </div>
+            <div>
+                <button onclick = 'setSpawnLocation(true)'>Spawn Location</button>
+                <button onclick = 'setCompletionLocation(true)'>Completion Location</button>
+                <button onclick = 'setCheckpointLocation(true)'>Checkpoint</button>
+            </div>
+            <div>
+                <div>
+                    Movement:
+                    <button onclick = "storeGroupInformation('movement', 'Horizontal')">Horizontal</button>
+                    <button onclick = "storeGroupInformation('movement', 'Vertical')">Vertical</button>
+                    <button onclick = "storeGroupInformation('movement', 'None')">None</button>
+                </div>
+                <div>
+                    Starting Direction:
+                    <button onclick = "storeGroupInformation('direction', 'Positive')">Positive</button>
+                    <button onclick = "storeGroupInformation('direction', 'Negative')">Negative</button>
+                </div>
+                <div>
+                    Linear Speed:
+                    <input type="text" id = 'createGroupLinearSpeed'>
+                </div>
+                <div>
+                    Circular Motion:
+                    <input type="checkbox" id = 'createGroupCircularMotion'>
+                </div>
+                <div>
+                    Rotational Speed:
+                    <input type="text" id = 'createGroupRotationalSpeed' placeholder = 'Quarter rotations/sec'>
+                </div>
+                <div>
+                    Rotational Direction:
+                    <button onclick = "storeGroupInformation('rotationalDirection', 'Clockwise')">Clockwise</button>
+                    <button onclick = "storeGroupInformation('rotationalDirection', 'Counterclockwise')">Counterclockwise</button>
+                </div>
+                <div id = 'closeGroupHolder'>
+                    <button onclick = 'closeGroup()'>Save</button>
+                </div>
+            </div>
+        </div>
+
+        <div class = 'itemsHolder' id = 'itemsHolder'>
+            <div class = 'itemDisplay tile'>
+                <div class = 'tileDisplay'>
+
+                </div>
+            </div>
+            <div class = 'itemDisplay noTile'>
+                <div class = 'noTileDisplay'>
+
+                </div>
+            </div>
+            <div class = 'itemDisplay safeZone'>
+                <div class = 'safeZoneDisplay'>
+
+                </div>
+            </div>
+            <div class = 'itemDisplay enemy'>
+                <div class = 'enemyDisplay'>
+
+                </div>
+            </div>
+            <div class = 'itemDisplay coin'>
+                <div class = 'coinDisplay'>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src='script.js'></script>
+    <script src="Scripts/animationFunctions.js"></script>
+    <script src="Scripts/positionFunctions.js"></script>
+    <script src="Scripts/myLibrary.js"></script>
+    <script src="Scripts/collisions.js"></script>
+    <script src="Scripts/gameFunction.js"></script>
+    <script src="Scripts/editElements.js"></script>
+    <script src="Scripts/boardClickHandler.js"></script>
+    <script src="Scripts/functions.js"></script>
+    <script src="Scripts/eventListeners.js"></script>
+    <script src="Classes/Player.js"></script>
+    <script src="Classes/Enemy.js"></script>
+    <script src="Classes/Coin.js"></script>
+</body>
+</html>

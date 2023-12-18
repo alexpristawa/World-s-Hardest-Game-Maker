@@ -1,0 +1,541 @@
+:root {
+    --backgroundColor: rgb(180,181,254);
+    --lightTileColor: rgb(247,247,255);
+    --darkTileColor: rgb(230,230,255);
+    --safeZoneColor: rgb(182,254,180);
+    --safeZoneEditColor: rgb(182,254,254);
+    --playerColor: rgb(255,0,0);
+    --playerBorderColor: rgb(0,0,0);
+    --enemyColor: rgb(0,0,255);
+    --enemyBorderColor: rgb(0,0,0);
+    --enemyEditColor: rgb(128, 128, 255);
+    --coinColor: rgb(255,255,0);
+    --coinBorderColor: rgb(0,0,0);
+    --coinEditColor: rgb(150, 255, 90);
+    --tileSize: 0px;
+}
+
+* {
+    font-family: Nunito;
+    vertical-align: top;
+}
+
+*:not(input) {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+html,body {
+    height: 100%;
+    width: 100%;
+}
+
+button {
+    cursor: pointer;
+}
+
+body {
+    background-color: var(--backgroundColor);
+    background-size: cover;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+.makerScreen {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.boardAbsoluteDisplay {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.boardRelativeDisplay {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.innerBoard {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+#gameCanvas {
+    position: absolute;
+    z-index: 9;
+    display: none;
+}
+
+.boardBackground {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(30, 1fr);
+    grid-template-rows: repeat(18, 1fr);
+}
+
+.player {
+    position: absolute;
+    background-color: var(--playerColor);
+    border: calc(var(--tileSize) / 9) solid var(--playerBorderColor);
+    width: calc(var(--tileSize) * 0.7);
+    height: calc(var(--tileSize) * 0.7);
+    box-sizing: border-box;
+    will-change: transform; /* Stops horizontal line bug */
+    transform: translate(-50%, -50%); /* Stops horizontal line bug */
+
+}
+
+.noOverflow {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+.visionGridColumn {
+    position: absolute;
+    display: grid;
+    grid-template-columns: repeat(60, 1fr);
+    grid-template-rows: 1fr;
+    z-index: 1;
+    height: calc(100% + var(--tileSize) * 0.5);
+    width: calc(100% + var(--tileSize) * 0.5);
+    transform: translate(calc(var(--tileSize)*-0.25), calc(var(--tileSize) * -0.25));
+}
+
+.visionGridRow {
+    position: absolute;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(36, 1fr);
+    z-index: 1;
+    height: calc(100% + var(--tileSize) * 0.5);
+    width: calc(100% + var(--tileSize) * 0.5);
+    transform: translate(calc(var(--tileSize)*-0.25), calc(var(--tileSize) * -0.25));
+}
+
+.gridLines {
+    border: 0.5px solid rgb(0,0,0,0.2);
+    box-sizing: border-box;
+}
+
+.itemsHolder {
+    position: absolute;
+    bottom: 0vh;
+    width: 100vw;
+    height: 15vh;
+    background-color: rgba(100,100,100,0.8);
+    border-top-left-radius: 1vw;
+    border-top-right-radius: 1vw;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 8;
+}
+
+.itemsHolder > div {
+    height: 80%;
+    aspect-ratio: 1 / 1;
+    background-color: var(--darkTileColor);
+    border-radius: 15%;
+    cursor: pointer;
+    border: 4px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 100ms ease-out;
+}
+
+.tileDisplay {
+    height: 50%;
+    width: 50%;
+    border: 2px solid black;
+    border-radius: 1%;
+    background-color: var(--lightTileColor);
+}
+
+.noTileDisplay {
+    height: 50%;
+    width: 50%;
+    border: 2px solid black;
+    border-radius: 1%;
+    background-color: var(--backgroundColor);
+}
+
+.safeZoneDisplay {
+    height: 50%;
+    width: 50%;
+    border: 2px solid black;
+    border-radius: 1%;
+    background-color: var(--safeZoneColor);
+}
+
+.enemyDisplay {
+    height: 5vh;
+    width: 5vh;
+    border: 1.25vh solid var(--enemyBorderColor);
+    border-radius: 100%;
+    background-color: var(--enemyColor);
+    box-sizing: border-box;
+}
+
+.coinDisplay {
+    height: 5vh;
+    width: 5vh;
+    border: 1.25vh solid var(--coinBorderColor);
+    border-radius: 100%;
+    background-color: var(--coinColor);
+    box-sizing: border-box;
+}
+
+.boardHolder {
+    display: flex;
+    align-items: center;
+    height: 75vh;
+    width: 100vw;
+    justify-content: center;
+}
+
+.board {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.enemies {
+    position: absolute;
+    width: calc(var(--tileSize) / 2);
+    height: calc(var(--tileSize) / 2);
+    border-radius: 100%;
+    background-color: var(--enemyColor);
+    border: calc(var(--tileSize) / 8) solid var(--enemyBorderColor);
+    transform: translate(-50%, -50%);
+    box-sizing: border-box;
+}
+
+.entities {
+    z-index: 9;
+}
+
+.coins {
+    position: absolute;
+    width: calc(var(--tileSize) / 2);
+    height: calc(var(--tileSize) / 2);
+    border-radius: 100%;
+    background-color: var(--coinColor);
+    border: calc(var(--tileSize) / 8) solid var(--coinBorderColor);
+    transform: translate(-50%, -50%);
+    box-sizing: border-box;
+}
+
+#topHolder {
+    height: 10vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.optionsHolder {
+    position: absolute;
+    height: 60vh;
+    width: 18vw;
+    left: 81vw;
+    top: 13vh;
+    border-radius: 2vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.optionsHolder > div {
+    width: 90%;
+    height: 92%;
+    display: none;
+    position: absolute;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    background-color: rgba(100,100,100,0.8);
+}
+
+.optionsHolder > div > div {
+    border-radius: 1vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 45%;
+    height: 30%;
+    cursor: pointer;
+    color: white;
+    background-color: black;
+}
+
+.goButton {
+    top: 1vh;
+    left: 45vw;
+    height: 90%;
+    width: 10vw;
+    background-color: green;
+    text-align: center;
+}
+
+.tile {
+    box-sizing: content-box;
+}
+
+#topHolder > div {
+    cursor: pointer;
+    color: white;
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 100ms ease-out;
+}
+
+#editButton {
+    background-color: blue;
+    border-radius: 1vh;
+    height: 90%;
+    width: 10%;
+}
+
+#editGroupButton {
+    width: 10%;
+    height: 90%;
+    background-color: black;
+}
+
+#typeOfGroup {
+    height: 80vh;
+    width: 50vw;
+    position: absolute;
+    background-color: red;
+    left: 25vw;
+    top: 10vh;
+    z-index: 10;
+    display: none;
+    opacity: 0;
+    flex-direction: column;
+    align-items: center;
+}
+
+#typeOfGroup > div:nth-child(1) {
+    height: 20%;
+    width: 100%;
+    background-color: blue;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    color: white;
+}
+
+#typeOfGroup > div:nth-child(2) {
+    height: 80%;
+    width: 100%;
+    background-color: yellow;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    display: none;
+}
+
+#typeOfGroup > div:nth-child(2) > button, #editGroupsInfoSafeZone > button {
+    border-radius: 1vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 30%;
+    height: 30%;
+    font-size: 1.2rem;
+    color: white;
+    background-color: black;
+    cursor: pointer;
+}
+
+/* Accesses the div holder of each div of options */
+#typeOfGroup > div:nth-child(3) {
+    height: 80%;
+    width: 100%;
+    background-color: yellow;
+    display: none;
+    flex-direction: column;
+
+}
+
+#typeOfGroup > div:nth-child(3) > div:not(#closeGroupHolder), #editGroupsInfoEnemy > div:not(#closeGroupHolder){
+    width: 95%;
+    height: 10%;
+    margin-left: 5%;
+    display: flex;
+    align-items: center;
+    background-color: red;
+}
+
+#typeOfGroup > div:nth-child(3) > div > *, #editGroupsInfoEnemy > div > *{
+    margin-left: 2%;
+    margin-right: 2%;
+}
+
+.enemyOptionsDiv {
+    position: absolute;
+    width: 30vw;
+    height: 50vh;
+    left: 35vw;
+    top: 20vh;
+    background-color: gray;
+    z-index: 10;
+    border-radius: 1vh;
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 2rem;
+    color: white;
+    opacity: 0;
+}
+
+#setSpeedDiv > input {
+    border-radius: 0.5vh;
+    border: 2px solid black;
+    color: black;
+    text-align: center;
+}
+
+#setDirectionDiv > div:nth-child(2) {
+    display: flex;
+    width: 100%;
+    height: 70%;
+    justify-content: space-around;
+    align-items: center;
+}
+
+#setDirectionDiv > div:nth-child(2) > div {
+    width: 40%;
+    height: 70%;
+    background-color: red;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 2vh;
+}
+
+#setDirectionDiv > div:nth-child(2) > div > div:nth-child(1) {
+    height: 30%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+#setDirectionDiv > div:nth-child(2) > div > div:nth-child(2) {
+    height: 70%;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+#setDirectionDiv button {
+    width: 40%;
+    height: 55%;
+    font-size: 1.4rem;
+    border-radius: 1vh;
+}
+
+#closeGroupHolder {
+    height: 40%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#closeGroupHolder > button {
+    height: 50%;
+    width: 30%; 
+    font-size: 2rem;
+    border-radius: 3vh;
+}
+
+#editGroups {
+    position: absolute;
+    left: 15vw;
+    top: 10vh;
+    width: 70vw;
+    height: 80vh;
+    background-color: red;
+    z-index: 10;
+    display: none;
+    opacity: 0;
+    align-items: center;
+    border-radius: 1vh;
+    overflow: hidden;
+}
+
+#editGroups > div:nth-child(1) {
+    width: 25%;
+    height: 100%;
+    background-color: blue;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#editGroups > div:nth-child(1) > div {
+    width: 100%;
+    height: 10%;
+    background-color: yellow;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid black;
+}
+
+#editGroupsInfo {
+    width: 75%;
+    height: 100%;
+    border-left: 3px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#editGroupsInfoEnemy {
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+}
+
+#editGroupsInfoSafeZone {
+    width: 100%;
+    height: 100%;
+    display: none;
+    justify-content: space-around;
+    align-items: center;
+}
