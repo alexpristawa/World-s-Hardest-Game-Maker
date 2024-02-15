@@ -17,7 +17,7 @@ class Coin {
         div.style.top = `${this.y}px`;
 
         //Appends it to the instances array
-        Coin.coins.push(this);
+        Coin.coins.numericInsert(this, 'x');
     }
 
     static playerCollisions() {
@@ -25,17 +25,14 @@ class Coin {
         if(index != -1) {
             for(let i = index; i < Coin.coins.length; i++) {
                 if(!Coin.coins[i].collected) {
-                    if(Player.player.x > Coin.coins[i].x + radius.coin + radius.player) {
+                    if(Coin.coins[i].x > Player.player.x + radius.coin + radius.player) {
                         break;
                     } else {
                         if(Math.abs(Player.player.y - Coin.coins[i].y) < radius.coin + radius.player) {
-                            if(checkCircleSquareCollision(
-                                {x: Coin.coins[i].x, y: Coin.coins[i].y, radius: radius.coin}, 
-                                {x: Player.player.x, y: Player.player.y, radius: radius.player})) {
-                                
-                                Coin.coins[i].collected = true;
-                                Coin.coins[i].element.style.display = 'none';
-                            }
+                            // Coin collisions with player are square on square
+                            Coin.coins[i].collected = true;
+                            Coin.coins[i].element.style.display = 'none';
+                            Player.player.collectedCoins.push(Coin.coins[i]);
                         }
                     }
                 }
@@ -44,9 +41,18 @@ class Coin {
     }
 
     static restoreCoins() {
-        for(let i = 0; i < Coin.coins.length; i++) {
-            Coin.coins[i].element.style.display = 'block';
-            Coin.coins[i].collected = false;
+        for(let i = 0; i < Player.player.collectedCoins.length; i++) {
+            Player.player.collectedCoins[i].element.style.display = 'block';
+            Player.player.collectedCoins[i].collected = false;
         }
+    }
+
+    static collectedAllCoins() {
+        for(let i = 0; i < Coin.coins.length; i++) {
+            if(!Coin.coins[i].collected) {
+                return false;
+            }
+        }
+        return true;
     }
 }

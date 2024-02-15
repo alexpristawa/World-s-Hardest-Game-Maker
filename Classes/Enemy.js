@@ -16,11 +16,26 @@ class Enemy {
         div.style.left = `${this.x}px`;
         div.style.top = `${this.y}px`;
 
+        Object.keys(this.behavior).forEach(key => {
+            if(key != 'type' && this.behavior[key] != 'none') {
+                this.behavior[key] = this.behavior[key] * diameter.gridSquare - radius.gridSquare;
+                
+                if(!isNaN(this.behavior[key])) {
+                    this.behavior[key] = parseFloat(this.behavior[key].toFixed(2));
+                }
+            }
+        });
+
+        for(let i = 0; i < obj.groups.length; i++) {
+            Group.groups[obj.groups[i]].elements.push(div);
+        }
+
         //Appends it to the instances array
-        Enemy.enemies.push(this);
+        Enemy.enemies.numericInsert(this, 'x');
     }
 
     /*
+        Moves the enemies
         Checks if a ball exceeded its group's borders and the borders of the board
         Has an exception that it doesn't run if the ball is part of a circlular group
     */
@@ -28,7 +43,7 @@ class Enemy {
         for(let i = 0; i < Enemy.enemies.length; i++) {
             let hasCircleGroup = false;
             for(let j = 0; j < Enemy.enemies[i].groups.length; j++) {
-                let group = groups[Enemy.enemies[i].groups[j]];
+                let group = Group.groups[Enemy.enemies[i].groups[j]];
                 if(group.circularMotion) {
                     hasCircleGroup = true;
                 } else {
@@ -49,8 +64,27 @@ class Enemy {
                     r: diameter.boardWidth,
                     b: diameter.boardHeight
                 }, true);
+
+                for(let j = 0; j < Enemy.enemies[i].groups.length; j++) {
+                    let group = Enemy.enemies[i].groups[j];
+                    Enemy.enemies[i].checkBorder({
+                        t: group.y - group.yRadius,
+                        b: group.y + group.yRadius,
+                        l: group.x - group.xRadius,
+                        r: group.x + group.xRadius
+                    });
+                }
             }
+
+            //Custom boundaries
+            Enemy.enemies[i].checkBorder({
+                t: Enemy.enemies[i].behavior.boundVMin,
+                b: Enemy.enemies[i].behavior.boundVMax,
+                l: Enemy.enemies[i].behavior.boundHMin,
+                r: Enemy.enemies[i].behavior.boundHMax
+            });
         }
+        Enemy.enemies.numericSort('x');
     }
 
     checkBorder(obj, move = false) {
@@ -80,7 +114,7 @@ class Enemy {
             } else if(this.direction == -1) {
                 if(this.x < obj.l + radius.enemy) {
                     let minCollision = obj.l + radius.enemy
-                    this.x = minCollision - (minCollision-this.x);
+                    this.x = minCollision + (minCollision-this.x);
                     this.direction *= -1;
                 }
             }
@@ -88,15 +122,15 @@ class Enemy {
     }
 
     /*
-        Checks every noZone based on enemy coordinates to check for a collision
+        Checks every noTile based on enemy coordinates to check for a collision
         Calls functions in the Scripts/collisions.js file for collisions
         Uses a binary search through noTiles because it is nested
     */
-    static noZoneCollisions() {
+    static noTileCollisions() {
         for(let i = 0; i < Enemy.enemies.length; i++) {
             let skipIndex = false;
             for(let j = 0; j < Enemy.enemies[i].groups.length; j++) {
-                if(groups[Enemy.enemies[i].groups[j]].circularMotion) {
+                if(Group.groups[Enemy.enemies[i].groups[j]].circularMotion) {
                     skipIndex = true;
                     break;
                 }
@@ -105,14 +139,14 @@ class Enemy {
                 skipIndex = true;
             }
             if(!skipIndex) {
-                let index = entities.noTiles.binarySearch(Enemy.enemies[i].x - radius.enemy - diameter.tile, 'x');
+                let index = NoTile.noTiles.binarySearch(Enemy.enemies[i].x - radius.enemy - diameter.tile, 'x');
                 if(index != -1) {
-                    for(let j = index; j < entities.noTiles.length; j++) {
-                        if(entities.noTiles[j].x > Enemy.enemies[i].x + radius.enemy) {
+                    for(let j = index; j < NoTile.noTiles.length; j++) {
+                        if(NoTile.noTiles[j].x > Enemy.enemies[i].x + radius.enemy) {
                             break;
                         } else {
-                            if(Math.abs(entities.noTiles[j].y + radius.tile - Enemy.enemies[i].y) < radius.enemy + radius.tile) {
-                                Enemy.enemies[i].noZoneCollision(j);
+                            if(Math.abs(NoTile.noTiles[j].y + radius.tile - Enemy.enemies[i].y) < radius.enemy + radius.tile) {
+                                Enemy.enemies[i].noTileCollision(j);
                             }
                         }
                     }
@@ -121,7 +155,7 @@ class Enemy {
         }
     }
 
-    noZoneCollision(j) {
+    noTileCollision(j) {
         if(this.movement == 'v') {
 
             //Not affected by collision
@@ -130,7 +164,7 @@ class Enemy {
             if(this.direction == 1) {
                 this.direction = -1;
         
-                let minCollision = entities.noTiles[j].y - radius.enemy;
+                let minCollision = NoTile.noTiles[j].y - radius.enemy;
         
                 //Take the minimum collision position, and subtract how much you are past it
                 this.y = minCollision - (this.y - minCollision);
@@ -140,7 +174,7 @@ class Enemy {
             } else {
                 this.direction = 1;
         
-                let minCollision = entities.noTiles[j].y + diameter.tile + radius.enemy;
+                let minCollision = NoTile.noTiles[j].y + diameter.tile + radius.enemy;
         
                 //Take the minimum collision possible, and add how much you are past it
                 this.y = minCollision + (minCollision - this.y);
@@ -154,10 +188,10 @@ class Enemy {
             //Not affected by collision
             this.element.style.top = `${this.y}px`;
         
-            if(entities.noTiles[j].x > this.x) {
+            if(NoTile.noTiles[j].x > this.x) {
                 this.direction = -1;
         
-                let minCollision = entities.noTiles[j].x - radius.enemy;
+                let minCollision = NoTile.noTiles[j].x - radius.enemy;
         
                 //Take the minimum collision possible, and subtract how much you are past it
                 this.x = minCollision - (this.x - minCollision);
@@ -167,7 +201,7 @@ class Enemy {
             } else {
                 this.direction = 1;
         
-                let minCollision = entities.noTiles[j].x + diameter.tile + radius.enemy;
+                let minCollision = NoTile.noTiles[j].x + diameter.tile + radius.enemy;
         
                 //Take the minimum collision possible, and add how much you are past it
                 this.x = minCollision + (minCollision - this.x);

@@ -18,17 +18,48 @@
 <body>
     <div class = 'screen makerScreen'>
         <div id = 'topHolder'>
-            <div id = 'editButton'>
-                Edit
+            <div>
+                <div id = 'profileButton'>
+                    <i class="fas fa-user"></i>
+                    <input type="checkbox">
+                    <div id = 'profileDiv' data-type = 'none'>
+                        <div class = 'sectionHolder'>
+                            <div data-type = 'Levels'>Levels</div>
+                        </div>
+                        <div class = 'listHolder'>
+
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class = 'goButton' onclick = 'running()'>Go!</div>
-            <div id = 'editGroupButton' onclick = 'editGroups()'>Edit Groups</div>
+            <div>
+                <div id = 'editButton'>
+                    Edit
+                </div>
+            </div>
+            <div>
+                <div class = 'goButton' onclick = 'running()'>Go!</div>
+            </div>
+            <div>
+                <div id = 'editGroupButton' onclick = 'editGroups()'>Edit Groups</div>
+            </div>
+            <div>
+
+            </div>
         </div>
 
         <div class = 'boardHolder'>
+            <div class = 'boardResizeHolder'>
+                <div class = 'boardResize'>
+                    <div class = 'left'></div>
+                    <div class = 'right'></div>
+                    <div class = 'top'></div>
+                    <div class = 'bottom'></div>
+                </div>
+            </div>
+
             <div class = 'board'>
                 <div class = 'innerBoard'>
-                    <canvas id = 'gameCanvas' height = '200px' width = '400px'></canvas>
                     <div class = 'boardBackground'></div>
                     <div class = 'noOverflow' id = 'visionGridNoOverflow'>
                         <div class = 'visionGridColumn grid'></div>
@@ -48,7 +79,7 @@
                 <div onclick = 'setDirection()'>Set Direction</div>
                 <div onclick = 'setSpeed()'>Set Speed</div>
                 <div onclick = 'handleEnableCollisions()' id = 'handleEnableCollisions'>Disable Collisions</div>
-                <div onclick = 'enableCustomBoundaries()' id = 'enableCustomBoundaries'>Enable Custom Boundaries</div>
+                <div onclick = 'showCustomBoundaries()' id = 'showCustomBoundaries'>Show Custom Boundaries</div>
                 <div onclick = 'customMovement()'>Custom Movement</div>
             </div>
         </div>
@@ -210,8 +241,13 @@
     <script src="Scripts/boardClickHandler.js"></script>
     <script src="Scripts/functions.js"></script>
     <script src="Scripts/eventListeners.js"></script>
+    <script src="Scripts/profile.js"></script>
+    <script src="Scripts/userInformation.js"></script>
     <script src="Classes/Player.js"></script>
     <script src="Classes/Enemy.js"></script>
     <script src="Classes/Coin.js"></script>
+    <script src="Classes/SafeZone.js"></script>
+    <script src="Classes/NoTile.js"></script>
+    <script src="Classes/Group.js"></script>
 </body>
 </html>

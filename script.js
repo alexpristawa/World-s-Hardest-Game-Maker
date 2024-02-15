@@ -7,12 +7,13 @@ let rootVariables = {
     lightTileColor: 'rgb(247,247,255)',
     darkTileColor: 'rgb(230,230,255)',
     safeZoneColor: 'rgb(182,254,180)',
-    playerColor: 'rgb(255,0,0)',
+    player1Color: 'rgb(255,0,0)',
+    player2Color: 'rgb(200, 128, 150)',
     playerBorderColor: 'rgb(0,0,0)',
     enemyColor: 'rgb(0,0,255)',
     enemyBorderColor: 'rgb(0,0,0)',
     coinColor: 'rgb(255,255,0)',
-    coinBorderColor: 'rgb(0,0,0)'
+    coinBorderColor: 'rgb(0,0,0)',
 }
 
 let keyboard = {
@@ -26,12 +27,22 @@ let keyboard = {
     ArrowRight: false,
     G: false,
     g: false,
+    t: false,
+    T: false,
+    n: false,
     Shift: false
 }
 
 let keyboardCorrections = {
     
 }
+
+const activeClickTranslations = {
+    safeZone: 'safeZones',
+    enemy: 'enemies',
+    coin: 'coins',
+    noTile: 'noTiles'
+};
 
 let resetEntitiesObj = () => {
     entities = {
@@ -42,6 +53,11 @@ let resetEntitiesObj = () => {
     }
 }
 let entities;
+
+let settings = {
+    twoPlayer: false,
+    lowFPS: false
+};
 
 let groups = {};
 
@@ -60,6 +76,13 @@ let playerHitboxes = [
     }
 }
 
+const boardResize = {
+    div: document.querySelector('.boardResize'),
+    left: document.querySelector('.boardResize > .left'),
+    right: document.querySelector('.boardResize > .right'),
+    top: document.querySelector('.boardResize > .top'),
+    bottom: document.querySelector('.boardResize > .bottom'),
+}
 const board = document.querySelector('.board');
 const innerBoard = document.querySelector('.innerBoard');
 const boardBackground = document.querySelector('.boardBackground');
@@ -68,17 +91,17 @@ const visionGridRow = document.querySelector('.visionGridRow');
 const visionGridNoOverflow = document.getElementById('visionGridNoOverflow');
 const itemsHolder = document.getElementById('itemsHolder');
 const goButton = document.querySelector('.goButton');
-
-const canvas = document.getElementById('gameCanvas');
-let canvasParent = canvas.parentElement;
-canvas.width = canvasParent.clientWidth;
-canvas.height = canvasParent.clientHeight;
-const ctx = canvas.getContext('2d');
+const profileDiv = document.querySelector('#profileDiv');
+const profileElements = {
+    sectionHolder: profileDiv.querySelector('.sectionHolder'),
+    listHolder: profileDiv.querySelector('.listHolder')
+};
 
 const optionsHolders = {
     safeZone: document.getElementById('optionsHolderSafeZone'),
     enemy: document.getElementById('optionsHolderEnemy')
 }
+
 const editGroupsList = document.querySelector('#editGroups > div:nth-child(1)');
 const editGroupsDiv = document.getElementById('editGroups');
 let deltaTime;
@@ -94,10 +117,24 @@ let boardColumns = 30;
 let boardRows = 18;
 let activeClick = 'none';
 let defaultBallSpeed = 1;
-let gameSpeed = 3;
+let gameSpeed = 1;
 let editing = true;
-boardBackground.style.gridTemplateColumns = `repeat(${boardColumns}, 1fr)`;
-boardBackground.style.gridTemplateRows = `repeat(${boardRows}, 1fr)`;
+let gridIsOn = true;
+
+let defaultElementProperties = {
+    enemy: {
+        zIndex: 9
+    },
+    safeZone: {
+        zIndex: 2
+    },
+    coin: {
+        zIndex: 10
+    },
+}
+
+const boardTypes = ['tile', 'noTile', 'safeZone'];
+
 let clickButtons = {
     edit: {
         element: document.querySelector("#editButton"),
@@ -122,9 +159,47 @@ let clickButtons = {
 
 /*
     Creates the board, filling it with tiles
+    Updates variables that store sizes
     To change the size of the board, change boardColumns and boardRows and call recreateBoard();
 */
 let recreateBoard = () => {
+    let width = window.innerWidth/50 * boardColumns;
+    let height = window.innerWidth/50 * boardRows;
+    let tileSize = width/boardColumns;
+    boardResize.div.style.width = `${width + 12}px`;
+    boardResize.div.style.height = `${height + 12}px`;
+    boardBackground.style.gridTemplateColumns = `repeat(${boardColumns}, 1fr)`;
+    boardBackground.style.gridTemplateRows = `repeat(${boardRows}, 1fr)`;    
+    board.style.width = `${width}px`;
+    board.style.height = `${height}px`;
+    root.style.setProperty('--tileSize', `${tileSize}px`);
+
+    radius = {
+        tile: tileSize/2,
+        entityBorder: tileSize/8,
+        player: tileSize/2*0.7,
+        enemy: tileSize/4,
+        coin: tileSize/4,
+        gridSquare: tileSize/4
+    };
+
+    diameter = {
+        tile: tileSize,
+        player: tileSize * 0.7,
+        enemy: tileSize/2,
+        coin: tileSize/2,
+        boardHeight: board.offsetHeight,
+        boardWidth: board.offsetWidth,
+        gridSquare: tileSize/2
+    };
+
+    const rect = board.getBoundingClientRect();
+    boardOffset = {
+        x: rect.left, 
+        y: rect.top
+    };
+
+    boardBackground.innerHTML = '';
     for(let i = 0; i < boardColumns; i++) {
         for(let j = 0; j < boardRows; j++) {
             let div = document.createElement('div');
@@ -170,6 +245,8 @@ let resetTilesArray = () => {
     Makes the grid based on boardColumns and boardRows
 */
 let makeGrid = () => {
+    visionGridColumn.innerHTML = '';
+    visionGridRow.innerHTML = '';
     visionGridColumn.style.gridTemplateColumns = `repeat(${boardColumns * 2 + 1}, 1fr)`;
     visionGridRow.style.gridTemplateRows = `repeat(${boardRows * 2 + 1}, 1fr)`;
 
@@ -193,37 +270,6 @@ let makeGrid = () => {
 }
 
 window.onload = () => {
-    let width = window.innerWidth/50 * boardColumns;
-    let height = window.innerWidth/50 * boardRows;
-    let tileSize = width/boardColumns;
-    board.style.width = `${width}px`;
-    board.style.height = `${height}px`;
-    root.style.setProperty('--tileSize', `${tileSize}px`);
-
-    radius = {
-        tile: tileSize/2,
-        entityBorder: tileSize/8,
-        player: tileSize/2*0.7,
-        enemy: tileSize/4,
-        coin: tileSize/4,
-        gridSquare: tileSize/4
-    };
-
-    diameter = {
-        tile: tileSize,
-        player: tileSize * 0.7,
-        enemy: tileSize/2,
-        coin: tileSize/2,
-        boardHeight: board.offsetHeight,
-        boardWidth: board.offsetWidth,
-        gridSquare: tileSize/2
-    };
-
-    const rect = board.getBoundingClientRect();
-    boardOffset = {
-        x: rect.left, 
-        y: rect.top
-    };
 
     resetEntitiesObj();
     resetTilesArray();

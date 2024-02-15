@@ -1,21 +1,51 @@
 let boardClickHandler = (event) => {
+    if(event.dummy !== true) {
+        if(event.target == document.documentElement) {
+            return;
+        }
+        if(event.target.parentElement.classList.contains('boundaryEditor')) {
+            return;
+        }
+        if(event.target.classList.contains('boundaryEditor')) {
+            return;
+        }
+        if(event.target.classList.contains('innerBoard')) {
+            return;
+        }
+    }
+
+    if(event.dummy !== true) {
+        if(event.target.classList.contains('grid') && ['edit', 'none'].indexOf(activeClick) != -1 || event.target.classList.contains('boundaryEditor')) {
+            return;
+        }
+    }
+
+    //Gets rid of current boundary editors
+    document.querySelectorAll('.boundaryEditor').forEach(element => element.fadeOut(200));
+
+    //Finds out what kind of tile you clicked on
     let distanceX = event.clientX - boardOffset.x;
     let distanceY = event.clientY - boardOffset.y;
-    let targetTile = tiles[Math.floor(distanceY/diameter.tile)][Math.floor(distanceX/diameter.tile)];
 
+    if(distanceX < 0 || distanceX > diameter.boardWidth || distanceY < 0 || distanceY > diameter.boardHeight) {
+        return;
+    }
+
+    //If it is asking for a target tile
     if(clickQuery !== false) {
         if(event.target.dataset.type == 'safeZone') {
             if(['Spawn', 'Checkpoint'].indexOf(clickQuery.type) != -1) {
                 let i = entities.safeZones.indexOfObjectValue('element', event.target);
                 groups[clickQuery.group].mainSquare = {
                     x: entities.safeZones[i].x,
-                    y: entities.safeZones[i].y
+                    y: entities.safeZones[i].y,
+                    obj: entities.safeZones[i]
                 };
                 goButton.innerHTML = 'Go!';
                 goButton.style.fontSize = '1.5rem';
                 clickQuery = false;
                 for(let i = 0; i < editTarget.length; i++) {
-                    setOriginalColor(editTarget[i]);
+                    setOriginalColor(editTarget[i].element);
                 }
                 editTarget = [];
             }
@@ -23,32 +53,70 @@ let boardClickHandler = (event) => {
         return;
     }
 
-    if(event.dummy !== true) {
+    //If it is not reconstructing the board
+    //Editing logic is inside here
+    if(event.dummy !== true && event.cameFrom !== 'mousemove' && !(boardTypes.includes(event.target.dataset.type) && boardTypes.includes(activeClick))) {
+
+        //Accidental click?
         if(event.target.classList.contains('grid') && activeClick == 'none') {
             return;
         } else if(['safeZone', 'enemy', 'coin'].indexOf(event.target.dataset.type) != -1) {
+
+            let key = activeClickTranslations[event.target.dataset.type];
+            let obj = entities[key][entities[key].indexOfObjectValue('element', event.target)];
+
+            //Changes activeClick to whatever you clicked on
+            if(activeClick !== event.target.dataset.type) {
+                activeClick = event.target.dataset.type;
+                clearEveryColor();
+                clickButtons[activeClick].element.style.backgroundColor = rootVariables.lightTileColor;
+            }
+
+            let added = addToEditTarget(obj, false, event.cameFrom=='mouseMove');
             structureEditOptions(event.target);
             setEditColor(event.target);
-            addToEditTarget(event.target);
+
+            //Adds the object from entities array to editTarget
+            
+
+            if(event.target.dataset.type == 'enemy') {
+                if(obj.showCustomBoundaries) {
+                    showCustomBoundaries(false, false);
+                }
+            }
+            return {
+                type: 'edit',
+                added: added,
+                obj: obj
+            };
         }
 
-        if(!event.target.classList.contains('grid') && ['edit', 'tile'].indexOf(activeClick) == -1) {
+        if((!event.target.classList.contains('grid') && !event.target.classList.contains('tile')) && ['edit', 'tile'].indexOf(activeClick) == -1) {
             return;
         }
     }
 
-    if(['tile', 'noTile', 'coin'].indexOf(activeClick) != -1) {
-        editTarget.forEach(element => setOriginalColor(element));
-        editTarget = [];
+    //Resets editTarget if you didn't click on something that can be clicked on
+    if(['tile', 'noTile'].indexOf(activeClick) != -1) {
+        if(!keyboard.Shift && event.dummy !== true) {
+            editTarget.forEach(obj => setOriginalColor(obj.element));
+            editTarget = [];
+        }
     }
 
     if(['tile', 'noTile', 'safeZone'].indexOf(activeClick) != -1) {
+        let targetTile = tiles[Math.floor(distanceY/diameter.tile)][Math.floor(distanceX/diameter.tile)];
         let tileX = Math.floor(distanceX / diameter.tile);
         let tileY = Math.floor(distanceY / diameter.tile);
         
-        
         let div = document.querySelector(`.boardBackground > :nth-child(${boardRows*tileX+tileY + 1})`);
-        div.dataset.type = activeClick;
+        try {
+            div.dataset.type = activeClick;
+        } catch {
+            console.log(div);
+            console.log(distanceX);
+            console.log(distanceY);
+        }
         overwriteTileInArray(tileX, tileY, activeClick);
         if(activeClick == 'tile') {
             tiles[tileY][tileX] = 'tile';
@@ -97,7 +165,7 @@ let boardClickHandler = (event) => {
             div.style.zIndex = 2;
             tiles[tileY][tileX] = 'noTile';
             div.style.border = '4px solid black';
-            entities.noTiles.numericInsert({x: tileX, y: tileY}, 'x');
+            entities.noTiles.numericInsert({x: tileX, y: tileY, type: 'noTile'}, 'x');
             try {
                 if(!(['tile', 'safeZone'].indexOf(tiles[tileY-1][tileX]) != -1) && tileY-1 >= 0) {
                     div.style.borderTop = '0px';
@@ -144,24 +212,32 @@ let boardClickHandler = (event) => {
                     y: tileY, 
                     element: div, 
                     groups: [], 
-                    special: 'none'
+                    special: 'none',
+                    type: 'safeZone'
                 };
                 if(event.dummy === true) {
                     obj = JSON.parse(JSON.stringify(event.obj));
                     obj.element = div;
+                    for(let i = 0; i < event.mainSquares.length; i++) {
+                        groups[event.mainSquares[i]].mainSquare.obj = obj;
+                    }
                 }
                 entities.safeZones.numericInsert(obj, 'x');
                 if(event.dummy !== true) {
                     structureEditOptions(div);
                     setEditColor(div);
-                    addToEditTarget(div);
+                    addToEditTarget(obj, false, true);
+                } else if(event.editElement === true) {
+                    addToEditTarget(obj, true);
+                    setEditColor(div);
                 }
             }
         }
     } else if(['enemy', 'coin'].indexOf(activeClick) != -1) {
-        let xNum = Math.floor((distanceX-diameter.tile/8*3 + 4) / diameter.gridSquare) + 1;
 
-        let yNum = Math.floor((distanceY-diameter.tile/8*3 + 4) / diameter.gridSquare) + 1;
+        //Gets grid square numbers for the tile that you clicked on
+        let xNum = Math.floor(distanceX / diameter.gridSquare + 0.5);
+        let yNum = Math.floor(distanceY / diameter.gridSquare + 0.5);
 
     
         let div = document.createElement('div');
@@ -175,11 +251,6 @@ let boardClickHandler = (event) => {
 
         if(activeClick == 'enemy') {
             div.classList.add('enemies');
-            if(event.dummy !== true) {
-                structureEditOptions(div);
-                setEditColor(div);
-                addToEditTarget(div);
-            }
             let obj = {
                 element: div,
                 x: xNum,
@@ -187,40 +258,58 @@ let boardClickHandler = (event) => {
                 movement: 'v',
                 direction: -1,
                 behavior: {
-                    bound1: 'none',
-                    bound2: 'none'
+                    type: 'normal',
+                    boundVMin: 'none',
+                    boundVMax: 'none',
+                    boundHMin: 'none',
+                    boundHMax: 'none'
                 },
                 speed: defaultBallSpeed,
                 groups: [],
                 collisions: true,
-                customBoundaries: false
+                showCustomBoundaries: false,
+                type: 'enemy'
             }
-            if(event.dummy === true) {
+            if(event.dummy !== true) {
+                structureEditOptions(div);
+                setEditColor(div);
+                addToEditTarget(obj, false, true);
+            } else if(event.dummy === true) {
                 obj = JSON.parse(JSON.stringify(event.obj));
                 obj.element = div;
                 for(let i = 0; i < obj.groups.length; i++) {
                     groups[obj.groups[i]].elements.push(div);
+                    groups[obj.groups[i]].objects.push(obj);
+                }
+                if(event.editElement === true) {
+                    addToEditTarget(obj, true);
+                    setEditColor(div);
                 }
             }
             entities.enemies.numericInsert(obj, 'x');
         } else if(activeClick == 'coin') {
             div.classList.add('coins');
-            if(event.dummy !== true) {
-                structureEditOptions(div);
-                setEditColor(div);
-                addToEditTarget(div);
-            }
-            entities.coins.numericInsert({
+            let obj = {
                 element: div,
                 x: xNum,
                 y: yNum,
-                collected: false
-            }, 'x');
-            editTarget = [div];
+                collected: false,
+                type: 'coin',
+                groups: [] /* Still includes this so obj.groups.length isn't undefined */
+            };
+            if(event.dummy !== true) {
+                structureEditOptions(div);
+                setEditColor(div);
+                addToEditTarget(obj, false, true);
+            } else if(event.editElement === true) {
+                addToEditTarget(obj, true);
+                setEditColor(div);
+            }
+            entities.coins.numericInsert(obj, 'x');
         }
     } else if(activeClick == 'edit') {
         structureEditOptions(event.target);
         setEditColor(event.target);
-        addToEditTarget(event.target);
+        addToEditTarget(entities[event.target.dataset.type][entities[event.target.dataset.type].indexOfObjectValue(event.target, 'element')]);
     }
 };
