@@ -11,7 +11,8 @@ let setSpawnLocation = (group = false) => {
             special: 'Spawn'
         };
         clickQuery = {
-            type: 'Spawn'
+            type: 'Spawn',
+            group: value
         };
 
         goButton.innerHTML = 'Select a main spawn tile';

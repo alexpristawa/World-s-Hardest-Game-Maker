@@ -723,9 +723,19 @@ body {
     pointer-events: all;
 }
 
+/* Meaning the second profile is not set up */
 #profileDiv[data-type="none"] > .sectionHolder {
     border-top-right-radius: 1vh;
     border-bottom-right-radius: 1vh;
+}
+
+/* Meaning the second profile is set up */
+#profileDiv[data-type]:not([data-type="none"]) > .sectionHolder {
+    border-right: 1px solid black;
+}
+
+#profileDiv[data-type]:not([data-type="none"]) > .listHolder {
+    border-left: 1px solid black;
 }
 
 #profileDiv > .sectionHolder > div {
@@ -746,4 +756,9 @@ body {
     align-items: center;
     color: white;
     background-color: rgb(30, 30, 30);
+    transition: background 200ms ease;
+}
+
+#profileDiv > .listHolder > div:hover {
+    background-color: rgb(100, 100, 100);
 }
