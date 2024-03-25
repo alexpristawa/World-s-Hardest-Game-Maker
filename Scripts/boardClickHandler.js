@@ -36,7 +36,6 @@ let boardClickHandler = (event) => {
         if(event.target.dataset.type == 'safeZone') {
             if(['Spawn', 'Checkpoint'].indexOf(clickQuery.type) != -1) {
                 let i = entities.safeZones.indexOfObjectValue('element', event.target);
-                console.log(clickQuery);
                 groups[clickQuery.group].mainSquare = {
                     x: entities.safeZones[i].x,
                     y: entities.safeZones[i].y,

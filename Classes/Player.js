@@ -204,7 +204,12 @@ class Player {
             }
         }
         if(allTrue) {
-            location.reload();
+            this.winMessage();
         }
+    }
+
+    winMessage() {
+        goButton.click();
+        alert("You win!");
     }
 }

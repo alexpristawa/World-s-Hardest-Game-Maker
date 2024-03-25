@@ -26,7 +26,7 @@ class SafeZone {
                                 if(settings.twoPlayer == 'Team') {
                                     Player.player.reachedEnd();
                                 } else {
-                                    location.reload();
+                                    Player.player.winMessage();
                                 }
                             }
                         } else if(SafeZone.safeZones[i].special == 'Checkpoint') {
@@ -45,7 +45,7 @@ class SafeZone {
                                     if(settings.twoPlayer == 'Team') {
                                         Player.player.reachedEnd();
                                     } else {
-                                        location.reload();
+                                        Player.player.winMessage();
                                     }
                                 }
                             } else if(Group.groups[key].special == 'Checkpoint') {
